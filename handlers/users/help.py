@@ -24,12 +24,13 @@ from aiogram.enums.parse_mode import ParseMode
 
 @dp.message(CheckLink.start)
 async def check_all_proxies(message: types.Message, state: FSMContext):
+    # Linkni tekshirish
     if not message.text.startswith("http"):
         await message.answer("❌ Iltimos, to‘g‘ri link yuboring.")
         return
 
     url = message.text
-    proxies = db.select_all_proxies()  # [(1, "179.60.183.97"), (2, "203.113.0.13"), ...]
+    proxies = db.select_all_proxies()  # Ma'lumotlar bazasidan proxylarni olish
 
     if not proxies:
         await message.answer("❌ Ma'lumotlar bazasida proxy serverlar topilmadi.")
@@ -40,9 +41,10 @@ async def check_all_proxies(message: types.Message, state: FSMContext):
     success_proxies = []
     failed_proxies = []
 
+    # Proxy ni tekshirish funksiyasi
     async def check_proxy(proxy_id, proxy_ip):
         """Berilgan proxy orqali URL ni sinash"""
-        proxy_url = f"http://{PROXY_USER}:{PROXY_PASS}@{proxy_ip}:{PROXY_PORT}"  
+        proxy_url = f"http://{PROXY_USER}:{PROXY_PASS}@{proxy_ip}:{PROXY_PORT}"
         try:
             async with aiohttp.ClientSession() as session:
                 async with session.get(url, proxy=proxy_url, timeout=10) as response:
@@ -51,21 +53,20 @@ async def check_all_proxies(message: types.Message, state: FSMContext):
                     else:
                         return proxy_id, proxy_ip, False, f"Xatolik: {response.status}"
         except Exception as e:
-            return proxy_id, proxy_ip, False, str(e)  
+            return proxy_id, proxy_ip, False, str(e)
 
+    # Barcha proxylarni tekshirish
     tasks = [check_proxy(proxy[0], proxy[1]) for proxy in proxies]
     results = await asyncio.gather(*tasks)
 
+    # Natijalarni saralash
     for proxy_id, proxy_ip, is_success, error in results:
         if is_success:
             success_proxies.append((proxy_id, proxy_ip))
         else:
             failed_proxies.append((proxy_id, proxy_ip, error))
 
-    # Xabarni qismlarga bo'lib yuborish
-    def split_message(message_text, max_length=4096):
-        return [message_text[i:i+max_length] for i in range(0, len(message_text), max_length)]
-
+    # Natijalarni tayyorlash
     result_message = "✅ **Muvaffaqiyatli proxy serverlar:**\n"
     for proxy_id, proxy in success_proxies:
         result_message += f"- {proxy_id}: {proxy}:{PROXY_PORT}\n"
@@ -75,10 +76,14 @@ async def check_all_proxies(message: types.Message, state: FSMContext):
         result_message += f"- {proxy_id}: {proxy}:{PROXY_PORT}: {error}\n"
 
     # Xabarni qismlarga bo'lib yuborish
+    def split_message(message_text, max_length=4096):
+        return [message_text[i:i + max_length] for i in range(0, len(message_text), max_length)]
+
     message_parts = split_message(result_message)
     for part in message_parts:
         await message.answer(part, parse_mode=ParseMode.MARKDOWN)
 
+    # Holatni tozalash
     await state.clear()
 
 
