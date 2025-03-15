@@ -20,7 +20,7 @@ async def check_proxies(call: types.CallbackQuery, state: FSMContext):
     await call.message.answer(text="🔗 Youtube link yuboring:")
     await state.set_state(CheckLink.start)
 
-from aiogram.types import ParseMode
+from aiogram.enums.parse_mode import ParseMode
 
 @dp.message(CheckLink.start)
 async def check_all_proxies(message: types.Message, state: FSMContext):
