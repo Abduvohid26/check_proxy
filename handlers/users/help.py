@@ -40,18 +40,18 @@ async def check_all_proxies(message: types.Message, state: FSMContext):
 
     async def check_proxy(proxy_id, proxy_ip):
         """Berilgan proxy orqali URL ni sinash"""
-        proxy_url = f"http://{PROXY_USER}:{PROXY_PASS}@{proxy_ip}:{PROXY_PORT}"  # Proxy format
+        proxy_url = f"http://{PROXY_USER}:{PROXY_PASS}@{proxy_ip}:{PROXY_PORT}"  
         try:
             async with aiohttp.ClientSession() as session:
                 async with session.get(url, proxy=proxy_url, timeout=10) as response:
                     if response.status == 200:
-                        return proxy_id, proxy_ip, True, None  # Muvaffaqiyatli
+                        return proxy_id, proxy_ip, True, None
                     else:
                         return proxy_id, proxy_ip, False, f"Xatolik: {response.status}"
         except Exception as e:
-            return proxy_id, proxy_ip, False, str(e)  # Xatolik
+            return proxy_id, proxy_ip, False, str(e)  
 
-    tasks = [check_proxy(proxy[0], proxy[1]) for proxy in proxies]  # ID va IP-larni olamiz
+    tasks = [check_proxy(proxy[0], proxy[1]) for proxy in proxies]
     results = await asyncio.gather(*tasks)
 
     for proxy_id, proxy_ip, is_success, error in results:
@@ -68,7 +68,13 @@ async def check_all_proxies(message: types.Message, state: FSMContext):
     for proxy_id, proxy, error in failed_proxies:
         result_message += f"- `{proxy_id}: {proxy}:{PROXY_PORT}`: {error}\n"
 
-    await message.answer(result_message, parse_mode=ParseMode.MARKDOWN)
+    async def send_long_message(text):
+        """Xabarni uzunlik bo‘yicha bo‘lib yuborish"""
+        max_length = 4000  # Telegram xabar uzunligi chegarasi
+        for i in range(0, len(text), max_length):
+            await message.answer(text[i:i+max_length], parse_mode=ParseMode.MARKDOWN)
+
+    await send_long_message(result_message)
     await state.clear()
 
 
