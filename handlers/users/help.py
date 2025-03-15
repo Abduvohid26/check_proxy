@@ -61,6 +61,11 @@ async def check_all_proxies(message: types.Message, state: FSMContext):
         else:
             failed_proxies.append((proxy_id, proxy_ip, error))
 
+    # Function to split long messages into chunks
+    def split_message(message_text, max_length=4096):
+        return [message_text[i:i+max_length] for i in range(0, len(message_text), max_length)]
+
+    # Build the result message
     result_message = "✅ **Muvaffaqiyatli proxy serverlar:**\n"
     for proxy_id, proxy in success_proxies:
         result_message += f"- `{proxy_id}: {proxy}:{PROXY_PORT}`\n"
@@ -69,9 +74,14 @@ async def check_all_proxies(message: types.Message, state: FSMContext):
     for proxy_id, proxy, error in failed_proxies:
         result_message += f"- `{proxy_id}: {proxy}:{PROXY_PORT}`: {error}\n"
 
-    await message.answer(result_message, parse_mode=ParseMode.MARKDOWN)
-    await state.clear()
+    # Split the message into chunks if it's too long
+    message_chunks = split_message(result_message)
 
+    # Send each chunk as a separate message
+    for chunk in message_chunks:
+        await message.answer(chunk, parse_mode=ParseMode.MARKDOWN)
+
+    await state.clear()
 
 class DeleteProxy(StatesGroup):
     start = State()
