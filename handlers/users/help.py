@@ -20,6 +20,8 @@ async def check_proxies(call: types.CallbackQuery, state: FSMContext):
     await call.message.answer(text="🔗 Youtube link yuboring:")
     await state.set_state(CheckLink.start)
 
+from aiogram.types import ParseMode
+
 @dp.message(CheckLink.start)
 async def check_all_proxies(message: types.Message, state: FSMContext):
     if not message.text.startswith("http"):
@@ -60,23 +62,24 @@ async def check_all_proxies(message: types.Message, state: FSMContext):
         else:
             failed_proxies.append((proxy_id, proxy_ip, error))
 
+    # Xabarni qismlarga bo'lib yuborish
+    def split_message(message_text, max_length=4096):
+        return [message_text[i:i+max_length] for i in range(0, len(message_text), max_length)]
+
     result_message = "✅ **Muvaffaqiyatli proxy serverlar:**\n"
     for proxy_id, proxy in success_proxies:
-        result_message += f"- `{proxy_id}: {proxy}:{PROXY_PORT}`\n"
+        result_message += f"- {proxy_id}: {proxy}:{PROXY_PORT}\n"
 
     result_message += "\n❌ **Ishlamagan proxy serverlar:**\n"
     for proxy_id, proxy, error in failed_proxies:
-        result_message += f"- `{proxy_id}: {proxy}:{PROXY_PORT}`: {error}\n"
+        result_message += f"- {proxy_id}: {proxy}:{PROXY_PORT}: {error}\n"
 
-    async def send_long_message(text):
-        """Xabarni uzunlik bo‘yicha bo‘lib yuborish"""
-        max_length = 4000  # Telegram xabar uzunligi chegarasi
-        for i in range(0, len(text), max_length):
-            await message.answer(text[i:i+max_length], parse_mode=ParseMode.MARKDOWN)
+    # Xabarni qismlarga bo'lib yuborish
+    message_parts = split_message(result_message)
+    for part in message_parts:
+        await message.answer(part, parse_mode=ParseMode.MARKDOWN)
 
-    await send_long_message(result_message)
     await state.clear()
-
 
 
 class DeleteProxy(StatesGroup):
