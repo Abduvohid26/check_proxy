@@ -23,7 +23,6 @@ async def check_proxies(call: types.CallbackQuery, state: FSMContext):
 from aiogram.enums.parse_mode import ParseMode
 
 from aiogram import types
-from aiogram.dispatcher import FSMContext
 from aiogram.utils.markdown import text, bold
 
 # MarkdownV2 uchun escape qilish funksiyasi
