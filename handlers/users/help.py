@@ -21,7 +21,17 @@ async def check_proxies(call: types.CallbackQuery, state: FSMContext):
     await state.set_state(CheckLink.start)
 
 from aiogram.enums.parse_mode import ParseMode
-from aiogram.utils.markdown import escape_md
+
+from aiogram import types
+from aiogram.dispatcher import FSMContext
+from aiogram.utils.markdown import text, bold
+
+# MarkdownV2 uchun escape qilish funksiyasi
+def escape_markdown(text):
+    escape_chars = "_*[]()~`>#+-=|{}.!"
+    for char in escape_chars:
+        text = text.replace(char, f"\\{char}")
+    return text
 
 @dp.message(CheckLink.start)
 async def check_all_proxies(message: types.Message, state: FSMContext):
@@ -71,8 +81,8 @@ async def check_all_proxies(message: types.Message, state: FSMContext):
     for proxy_id, proxy, error in failed_proxies:
         result_message += f"- `{proxy_id}: {proxy}:{PROXY_PORT}`: {error}\n"
 
-    # Xabarni escape qilish
-    result_message = escape_md(result_message)
+    # MarkdownV2 formatida escape qilish
+    result_message = escape_markdown(result_message)
 
     # Xabarni qismlarga bo'lib yuborish
     def split_message(message_text, max_length=4096):
@@ -80,10 +90,9 @@ async def check_all_proxies(message: types.Message, state: FSMContext):
 
     message_chunks = split_message(result_message)
     for chunk in message_chunks:
-        await message.answer(chunk, parse_mode=ParseMode.MARKDOWN)
+        await message.answer(chunk, parse_mode="MarkdownV2")
 
     await state.clear()
-
 
 
 
