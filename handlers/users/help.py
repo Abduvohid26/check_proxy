@@ -21,6 +21,7 @@ async def check_proxies(call: types.CallbackQuery, state: FSMContext):
     await state.set_state(CheckLink.start)
 
 from aiogram.enums.parse_mode import ParseMode
+from aiogram.utils.markdown import escape_md
 
 @dp.message(CheckLink.start)
 async def check_all_proxies(message: types.Message, state: FSMContext):
@@ -61,11 +62,7 @@ async def check_all_proxies(message: types.Message, state: FSMContext):
         else:
             failed_proxies.append((proxy_id, proxy_ip, error))
 
-    # Function to split long messages into chunks
-    def split_message(message_text, max_length=4096):
-        return [message_text[i:i+max_length] for i in range(0, len(message_text), max_length)]
-
-    # Build the result message
+    # Xabarni yaratish
     result_message = "✅ **Muvaffaqiyatli proxy serverlar:**\n"
     for proxy_id, proxy in success_proxies:
         result_message += f"- `{proxy_id}: {proxy}:{PROXY_PORT}`\n"
@@ -74,14 +71,23 @@ async def check_all_proxies(message: types.Message, state: FSMContext):
     for proxy_id, proxy, error in failed_proxies:
         result_message += f"- `{proxy_id}: {proxy}:{PROXY_PORT}`: {error}\n"
 
-    # Split the message into chunks if it's too long
-    message_chunks = split_message(result_message)
+    # Xabarni escape qilish
+    result_message = escape_md(result_message)
 
-    # Send each chunk as a separate message
+    # Xabarni qismlarga bo'lib yuborish
+    def split_message(message_text, max_length=4096):
+        return [message_text[i:i+max_length] for i in range(0, len(message_text), max_length)]
+
+    message_chunks = split_message(result_message)
     for chunk in message_chunks:
         await message.answer(chunk, parse_mode=ParseMode.MARKDOWN)
 
     await state.clear()
+
+
+
+
+
 
 class DeleteProxy(StatesGroup):
     start = State()
